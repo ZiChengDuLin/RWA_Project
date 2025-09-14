@@ -7,7 +7,7 @@ exports.regUser = (req, res) => {
   //获取用户提交数据
   const userinfo = req.body;
 
-  //定义SQL语句,查询用户身份证号
+  //定义SQL语句,查询用户邮箱
   console.log('用户:' + userinfo.user_email)
   const sqlStr = 'select * from user where user_email=?'
   db.query(sqlStr, [userinfo.user_email], (err, results) => {
@@ -15,7 +15,7 @@ exports.regUser = (req, res) => {
     // 执行SQL语句失败
     if (err) return res.cc(err)
 
-    //判断身份证号是否被占用
+    //判断邮箱是否被占用
     if (results.length > 0) { return res.cc('该邮箱已被注册!') }
 
     // 调用bcrypt.hashSync()对密码进行加密(不能解密，只能验证)
