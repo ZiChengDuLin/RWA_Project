@@ -1,0 +1,27 @@
+{
+  "name": "rwa_project",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.22.2",
+    "nodemon": "^3.1.10"
+  },
+  "dependencies": {
+    "@escook/express-joi": "^1.1.1",
+    "@openzeppelin/contracts": "^5.0.2",
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "express-jwt": "^8.5.1",
+    "mysql2": "^3.14.5",
+    "web3": "^4.16.0"
+  }
+}
