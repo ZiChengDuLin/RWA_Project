@@ -8,15 +8,15 @@ exports.regUser = (req, res) => {
   const userinfo = req.body;
 
   //定义SQL语句,查询用户身份证号
-  console.log('用户Id:' + userinfo.user_id)
-  const sqlStr = 'select * from user where user_id=?'
-  db.query(sqlStr, [userinfo.user_id], (err, results) => {
+  console.log('用户:' + userinfo.user_email)
+  const sqlStr = 'select * from user where user_email=?'
+  db.query(sqlStr, [userinfo.user_email], (err, results) => {
 
     // 执行SQL语句失败
     if (err) return res.cc(err)
 
     //判断身份证号是否被占用
-    if (results.length > 0) { return res.cc('该身份证号已被注册!') }
+    if (results.length > 0) { return res.cc('该邮箱已被注册!') }
 
     // 调用bcrypt.hashSync()对密码进行加密(不能解密，只能验证)
     console.log('注册用户未加密密码:' + userinfo.user_password)
@@ -25,7 +25,7 @@ exports.regUser = (req, res) => {
 
     // 定义插入用户数据的SQL语句
     const sql = 'insert into user set ?'
-    db.query(sql, { user_name: userinfo.user_name, user_password: userinfo.user_password, user_id: userinfo.user_id }, (err, results) => {
+    db.query(sql, { user_name: userinfo.user_name, user_password: userinfo.user_password, user_id: userinfo.user_id, user_email: userinfo.user_email, user_phone: userinfo.user_phone }, (err, results) => {
 
       // 执行SQL语句失败
       if (err) return res.cc(err)
@@ -44,8 +44,8 @@ exports.login = (req, res) => {
   //获取用户提交数据
   const userinfo = req.body
 
-  const sql = 'select * from user where user_name=?'
-  db.query(sql, [userinfo.user_name], (err, results) => {
+  const sql = 'select * from user where user_email=?'
+  db.query(sql, [userinfo.user_email], (err, results) => {
     // 执行SQL语句失败
     if (err) return res.cc(err)
     // 执行SQL语句成功，但是查询到数据条数不等于1
@@ -56,12 +56,12 @@ exports.login = (req, res) => {
     if (!compareResult) return res.cc('密码错误,登录失败！')
 
     //在服务器端生成token字符串并擦除密码及id等敏感信息
-    const user = { ...results[0], user_password: '', user_id: '' }
+    const user = { ...results[0], user_password: '', user_email: '' }
 
     //对用户信息进行加密，生成token字符串
     const tokenStr = jwt.sign(user, process.env.jwt_SecretKey, { expiresIn: process.env.expiresIn })
 
-    console.log('用户登录成功！')
+    console.log('用户: ' + userinfo.user_email + ' 登录成功！')
 
     res.send({
       status: 0,
