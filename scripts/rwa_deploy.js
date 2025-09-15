@@ -1,64 +1,85 @@
-// scripts/deploy.js
-require("dotenv").config();
 const { ethers } = require("hardhat");
-
-const Owner_address = process.env.Owner_address;
-const Guard_address = process.env.Guard_address;
-
-//打印部署地址
-const hre = require("hardhat");
-console.log("============RPC URL =", hre.network.config.url);
-
-// 创建函数部署合约
-async function deploy(name, args = []) {
-  // 将传入参数统一成数组
-  if (!Array.isArray(args)) args = [args];
-  // 去掉末尾多余的参数，避免被当作null传入
-  while (args.length && (args[args.length - 1] === null || args[args.length - 1] === undefined)) { args.pop(); }
-  const factory = await ethers.getContractFactory(name);
-  const contract = await factory.deploy(args);
-  await contract.waitForDeployment();
-  console.log(`✔ ${name} =>`, await contract.getAddress());
-  return contract;
-}
 
 async function main() {
   const [deployer] = await ethers.getSigners();
-  console.log("============Deployer:", deployer.address);
+  console.log("Deploying with:", deployer.address);
 
-  //1.部署ComplianceGuardLite
-  const guard = await deploy("ComplianceGuardLite");
+  // Step 1. 部署基础模块
+  const Guard = await ethers.getContractFactory("ComplianceGuardV2");
+  const guard = await Guard.deploy(deployer.address, process.env.Verifier);
+  console.log("=======参数传入成功=======");
+  await guard.waitForDeployment();
+  console.log("✔ComplianceGuardV2:", guard.target);
 
-  //2.部署LoanManagerAccrualProLite
-  let manager;
-  try { manager = await deploy("LoanManagerAccrualProLite", [await guard.getAddress()]); }
-  catch { manager = await deploy("LoanManagerAccrualProLite"); }
-  const managerAddr = await manager.getAddress();
+  const Registry = await ethers.getContractFactory("HolderRegistry1");
+  const registry = await Registry.deploy(deployer.address);
+  console.log("=======参数传入成功=======");
+  await registry.waitForDeployment();
+  console.log("✔HolderRegistry1:", registry.target);
 
-  //3.部署PrincipalToken和InterestToken（如果你的构造没有 owner 参数，就先不传，随后 transferOwnership 给 manager）
-  const PrincipalToken_factory = await ethers.getContractFactory("PrincipalToken")
-  const PrincipalToken_contract = await PrincipalToken_factory.deploy(Owner_address, managerAddr, Guard_address)
-  await PrincipalToken_contract.waitForDeployment()
-  console.log(`✔ PrincipalToken_contract =>`, await PrincipalToken_contract.getAddress())
+  const Exchange = await ethers.getContractFactory("ExchangeModule");
+  const exchange = await Exchange.deploy(process.env.SEPOLIA_USDT_ADDR, deployer.address);
+  console.log("=======参数传入成功=======");
+  await exchange.waitForDeployment();
+  console.log("✔ExchangeModule:", exchange.target);
 
-  const InterestToken_factory = await ethers.getContractFactory("InterestToken")
-  const InterestToken_contract = await InterestToken_factory.deploy(Owner_address, Guard_address)
-  await InterestToken_contract.waitForDeployment()
-  console.log(`✔ InterestToken_contracts =>`, await InterestToken_contract.getAddress())
+  const Principal = await ethers.getContractFactory("LPrincipal");
+  const principal = await Principal.deploy("Principal-Token", "PWL-P", 1_000_000 * 1e6, exchange.target, deployer.address);
+  console.log("=======参数传入成功=======");
+  await principal.waitForDeployment();
+  console.log("✔LPrincipal:", principal.target);
 
-  console.log(" ============ All contracts deployed successfully ============ ")
+  const Interest = await ethers.getContractFactory("LInterest");
+  const interest = await Interest.deploy("LInterest-Token", "PWL-I", deployer.address);
+  console.log("=======参数传入成功=======");
+  await interest.waitForDeployment();
+  console.log("✔LInterest:", interest.target);
 
-  // 4) 如需在 Manager 里登记两种 token 地址（按你的合约函数名选择调用）
-  // if (manager.getFunction) {
-  //   for (const sig of ["setTokens(address,address)", "setTokenAddresses(address,address)", "initializeTokens(address,address)"]) {
-  //     try {
-  //       const fn = manager.getFunction(sig);
-  //       await (await fn(await pt.getAddress(), await it.getAddress())).wait();
-  //       console.log("✔ Tokens registered via", sig);
-  //       break;
-  //     } catch { }
-  //   }
-  // }
+  const Accrual = await ethers.getContractFactory("AccrualModule");
+  const accrual = await Accrual.deploy(deployer.address);
+  console.log("=======参数传入成功=======");
+  await accrual.waitForDeployment();
+  console.log("✔AccrualModule:", accrual.target);
+
+  const Manager = await ethers.getContractFactory("RWAManager");
+  const manager = await Manager.deploy(deployer.address);
+  console.log("=======参数传入成功=======");
+  await manager.waitForDeployment();
+  console.log("✔RWAManager:", manager.target);
+
+  // Step 2. 配置布线
+  // Guard <-> Tokens/Modules
+  await (await principal.setGuard(guard.target)).wait();
+  await (await interest.setGuard(guard.target)).wait();
+  await (await principal.setRegistry(registry.target)).wait();
+  await (await interest.setRegistry(registry.target)).wait();
+
+  // Accrual 布线
+  await (await accrual.wire(principal.target, interest.target, guard.target, registry.target)).wait();
+
+  // Exchange 布线
+  await (await exchange.wire(principal.target, guard.target, accrual.target, process.env.FEE_RECIPIENT)).wait();
+
+  // Manager 配置
+  await (await manager.setAddresses(
+    guard.target,
+    registry.target,
+    principal.target,
+    interest.target,
+    accrual.target,
+    exchange.target
+  )).wait();
+
+  await (await manager.wireRegistryAndManagers(
+    [principal.target, interest.target, exchange.target, accrual.target],
+    exchange.target,   // principal 的 manager
+    accrual.target     // interest 的 manager
+  )).wait();
+
+  console.log("部署与初始化完成 ✅");
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
