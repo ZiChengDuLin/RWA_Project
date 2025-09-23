@@ -16,6 +16,9 @@ module.exports = {
     }
   },
   networks: {
+    localhost: {
+      url: "http://127.0.0.1:8545"
+    },
     sepolia: {
       url: SEPOLIA_URL,
       accounts: [
@@ -33,6 +36,9 @@ module.exports = {
   paths: {
     sources: "./contracts", // 如你的合约不在 contracts 目录可调整
     scripts: "./scripts",
+    tests: "./test",
+    cache: "./cache",
+    artifacts: "./artifacts"
   },
   mocha: {
     timeout: 40000
