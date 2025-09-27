@@ -2,7 +2,7 @@
 require('dotenv').config()
 module.exports = {
   mysql: {
-    host: process.env.db_host || 'localhost',                             // 数据库IP地址
+    host: process.env.db_host || '8.138.127.3',                           // 数据库IP地址
     user: process.env.db_user || 'root',                                  // 用户名
     password: process.env.db_password || '123456',                        // 密码
     database: process.env.db_name || 'rwa',                               // 数据库名   

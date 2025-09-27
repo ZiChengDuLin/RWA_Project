@@ -20,7 +20,11 @@ const joi = require('joi')
 app.use(responseHandler())
 
 // 导入并配置cors中间件
-app.use(cors())
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
+}));
 
 //配置解析表单数据的中间件，注意：这个中间件，只能解析json格式的表单数据(可改为urlencoded形式)
 app.use(express.json())
@@ -51,15 +55,16 @@ app.use((err, req, res, next) => {
 
 
 //启动服务器
-app.listen(3000, () => { console.log('服务器3000端口已启动成功') })
+app.listen(3000, '0.0.0.0', () => { console.log('服务器3000端口已启动成功') })
 
 // 测试数据库连接，执行sql语句
-const sqlStr = 'select * from user'
+const sqlStr = 'show databases'
 mysql.query(sqlStr, (err, results) => {
   if (err) {
     console.log('数据库连接错误:' + err.message);
   } else {
     console.log('数据库连接成功!');
+    console.log('数据库列表:', results);
   }
 });
 
