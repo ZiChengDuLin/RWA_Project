@@ -33,15 +33,17 @@ app.use(express.urlencoded({ extended: false }))
 //在路由解析之前配置解析token的中间件
 const { expressjwt: expressJWT } = require('express-jwt')
 //未启用令牌
-//app.use(expressJWT({ secret: process.env.jwt_SecretKey, algorithms: ['HS256'] }).unless({ path: [/^\/api\/login$/, /^\/api\/reguser$/] }))
+//app.use(expressJWT({ secret: process.env.jwt_SecretKey, algorithms: ['HS256'] }).unless({ path: [/^\/user\/login$/, /^\/user\/reguser$/] }))
 
 //导入路由模块
 const userRouter = require('./src/routers/userRouter')
-const transactionRouter = require('./src/routers/transactionRouter')
+//const transactionRouter = require('./src/routers/transactionRouter')
+const product_detailsRouter = require('./src/routers/product_detailsRouter')
 
 // 使用路由模块
 app.use('/user', userRouter)
-app.use('/transaction', transactionRouter)
+//app.use('/transaction', transactionRouter)
+app.use('/product', product_detailsRouter)
 
 // 定义全局错误级别中间件
 app.use((err, req, res, next) => {
