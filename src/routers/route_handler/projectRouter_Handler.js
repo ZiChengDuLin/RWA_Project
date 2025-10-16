@@ -1,8 +1,8 @@
 const db = require("../../database/index");
 // 新增项目
-async function insertProduct(req, res) {
+async function insertProject(req, res) {
   // 接收传入数据
-  const product = req.body;
+  const project = req.body;
 
   // 定义允许写入的字段（防止前端传多余字段）
   const fields = [
@@ -17,27 +17,27 @@ async function insertProduct(req, res) {
     "issuer_token", "loan_token", "valuation_report", "mortgage_deed"
   ];
 
-  // 自动拼接字段和占位符,最终生成类似 INSERT INTO product_details (field1, field2) VALUES (?, ?) 的SQL语句
+  // 自动拼接字段和占位符,最终生成类似 INSERT INTO project (field1, field2) VALUES (?, ?) 的SQL语句
   const columns = fields.join(", ");
   const placeholders = fields.map(() => "?").join(", ");
-  const sql = `INSERT INTO product_details (${columns}) VALUES (${placeholders})`;
+  const sql = `INSERT INTO project (${columns}) VALUES (${placeholders})`;
 
   // 根据字段顺序提取 values
-  const values = fields.map(field => product[field] || null);
+  const values = fields.map(field => project[field] || null);
 
   db.query(sql, values, (err, results) => {
     if (err) {
       console.error("新增项目失败:", err);
       return res.cc("新增项目失败");
     }
-    console.log("新增项目成功:", product.name);
-    res.send({ status: 0, message: `新增项目 ${product.name} 成功`, code: `${product.code}` });
+    console.log("新增项目成功:", project.name);
+    res.send({ status: 0, message: `新增项目 ${project.name} 成功`, code: `${project.code}` });
   });
 };
 
 //查询全部项目
-async function selectProduct(req, res) {
-  const sql = `select * from product_details`;
+async function selectProject(req, res) {
+  const sql = `select * from project`;
   db.query(sql, (err, results) => {
     if (err) {
       console.error("查询项目失败:", err);
@@ -49,15 +49,15 @@ async function selectProduct(req, res) {
 };
 
 // 根据code精确查询
-async function selectProductByCode(req, res) {
-  // 从路径参数获取 code，例如 /product/select/RWA004
+async function selectProjectByCode(req, res) {
+  // 从路径参数获取 code，例如 /project/select/RWA004
   const { code } = req.params;
 
   if (!code) {
     return res.cc("缺少参数 code");
   }
 
-  const sql = `SELECT * FROM product_details WHERE code = ?`;
+  const sql = `SELECT * FROM project WHERE project_code = ?`;
   db.query(sql, [code], (err, results) => {
     if (err) {
       console.error("查询项目失败:", err);
@@ -71,4 +71,4 @@ async function selectProductByCode(req, res) {
   });
 }
 
-module.exports = { insertProduct, selectProduct, selectProductByCode };
+module.exports = { insertProject, selectProject, selectProjectByCode };

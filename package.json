@@ -10,7 +10,8 @@
     "interact": "npx hardhat run scripts/interact.js",
     "interact:network": "npx hardhat run --network sepolia scripts/interact.js",
     "test": "npx hardhat test",
-    "node": "npx hardhat node"
+    "node": "npx hardhat node",
+    "start": "node index.js"
   },
   "keywords": [
     "solidity",
@@ -35,6 +36,7 @@
     "express": "^5.1.0",
     "express-jwt": "^8.5.1",
     "mysql2": "^3.14.5",
+    "nodemailer": "^7.0.6",
     "web3": "^4.16.0"
   }
 }

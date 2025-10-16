@@ -37,13 +37,13 @@ const { expressjwt: expressJWT } = require('express-jwt')
 
 //导入路由模块
 const userRouter = require('./src/routers/userRouter')
-//const transactionRouter = require('./src/routers/transactionRouter')
-const product_detailsRouter = require('./src/routers/product_detailsRouter')
+const transactionRouter = require('./src/routers/transactionRouter')
+const projectRouter = require('./src/routers/projectRouter')
 
 // 使用路由模块
 app.use('/user', userRouter)
-//app.use('/transaction', transactionRouter)
-app.use('/product', product_detailsRouter)
+app.use('/transaction', transactionRouter)
+app.use('/project', projectRouter)
 
 // 定义全局错误级别中间件
 app.use((err, req, res, next) => {
@@ -69,6 +69,3 @@ mysql.query(sqlStr, (err, results) => {
     console.log('数据库列表:', results);
   }
 });
-
-
-

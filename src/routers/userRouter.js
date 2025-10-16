@@ -15,4 +15,7 @@ userRouter.post('/reguser', expressJoi(reg_login_schema), userRouterHandler.regU
 //登录用户
 userRouter.post('/login', expressJoi(reg_login_schema), userRouterHandler.login)
 
+// 邮箱验证
+userRouter.get('/verify-email', userRouterHandler.verifyEmail)
+
 module.exports = userRouter
